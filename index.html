@@ -1,53 +1,117 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video to Text Converter</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 450px; text-align: center; }
+        h2 { color: #5d66b0; margin-bottom: 25px; }
+        .upload-area { border: 2px dashed #adaed6; background-color: #f8f9ff; padding: 40px 20px; border-radius: 15px; color: #666; cursor: pointer; margin-bottom: 20px; }
+        .video-label { background: #fff; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+        #convertBtn { background-color: #adaed6; color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .output-box { margin-top: 25px; background-color: #636ba9; color: white; padding: 20px; border-radius: 18px; text-align: left; min-height: 100px; }
+        .settings-btn { font-size: 12px; color: #7a82c2; text-decoration: underline; cursor: pointer; margin-top: 15px; display: inline-block; }
+        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: white; margin: 15% auto; padding: 20px; border-radius: 15px; width: 300px; text-align: center; }
+        .modal input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        .loader { display: none; border: 3px solid #f3f3f3; border-top: 3px solid #5d66b0; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Link to Text Converter</h2>
+
+    <div class="upload-area" id="drop-zone">
+        Tap, drag & drop, or paste <span class="video-label">video</span> here
+        <input type="file" id="videoInput" accept="video/*" style="display: none;">
+        <p id="fileName" style="font-size: 12px; margin-top: 10px; color: #5d66b0;"></p>
+    </div>
+
+    <button id="convertBtn">
+        <span class="loader" id="loader"></span>
+        🔍 <span id="btnText">Convert</span>
+    </button>
+
+    <div class="output-box">
+        <small>Translate / Subtitles</small>
+        <p id="resultText">এখানে ভিডিওর টেক্সট দেখা যাবে...</p>
+    </div>
+
+    <span class="settings-btn" id="removeKeyBtn">Remove API Key</span>
+</div>
+
+<div id="apiModal" class="modal">
+    <div class="modal-content">
+        <h3>API Key প্রয়োজন</h3>
+        <input type="password" id="apiInput" placeholder="Paste API Key here">
+        <br>
+        <button id="saveKeyBtn" style="background: #5d66b0; color: white; padding: 8px 20px; border-radius: 5px; border: none; cursor: pointer;">Save</button>
+        <button id="closeModalBtn" style="padding: 8px 20px; border: none; cursor: pointer;">Cancel</button>
+    </div>
+</div>
+
 <script>
+window.onload = function() {
     const videoInput = document.getElementById('videoInput');
     const resultText = document.getElementById('resultText');
     const apiModal = document.getElementById('apiModal');
     const apiInput = document.getElementById('apiInput');
     const loader = document.getElementById('loader');
     const btnText = document.getElementById('btnText');
+    const dropZone = document.getElementById('drop-zone');
+    const convertBtn = document.getElementById('convertBtn');
+    const saveKeyBtn = document.getElementById('saveKeyBtn');
+    const removeKeyBtn = document.getElementById('removeKeyBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
 
-    async function checkAndConvert() {
+    // ভিডিও সিলেক্ট করার জন্য ক্লিক হ্যান্ডলার
+    dropZone.onclick = () => videoInput.click();
+
+    videoInput.onchange = () => {
+        if(videoInput.files[0]) document.getElementById('fileName').innerText = "Selected: " + videoInput.files[0].name;
+    };
+
+    // Convert বাটনে ক্লিক
+    convertBtn.onclick = function() {
         const savedKey = localStorage.getItem('gemini_api_key');
         if (!savedKey) {
             apiModal.style.display = 'block';
         } else {
             startTranscription(savedKey);
         }
-    }
+    };
 
-    function saveApiKey() {
+    saveKeyBtn.onclick = function() {
         const key = apiInput.value.trim();
         if (key) {
             localStorage.setItem('gemini_api_key', key);
             apiModal.style.display = 'none';
-            alert("API Key Saved!");
+            alert("API Key সফলভাবে সেভ হয়েছে!");
         }
-    }
+    };
 
-    function removeApiKey() {
+    removeKeyBtn.onclick = () => {
         localStorage.removeItem('gemini_api_key');
-        alert("API Key Removed!");
-    }
+        alert("API Key মুছে ফেলা হয়েছে।");
+    };
 
-    function closeModal() { apiModal.style.display = 'none'; }
+    closeModalBtn.onclick = () => apiModal.style.display = 'none';
 
     async function startTranscription(apiKey) {
         const videoFile = videoInput.files[0];
-        if (!videoFile) return alert("Please select a video first!");
-
-        // ফাইল সাইজ চেক (Gemini inline_data সাধারণত ২০ এমবি পর্যন্ত ভালো কাজ করে)
-        if (videoFile.size > 20 * 1024 * 1024) {
-             resultText.innerText = "Error: ভিডিওটি ২০ এমবির চেয়ে বড়। ছোট ভিডিও ট্রাই করুন।";
-             return;
-        }
+        if (!videoFile) return alert("দয়া করে আগে একটি ভিডিও ফাইল সিলেক্ট করুন!");
 
         loader.style.display = "inline-block";
         btnText.innerText = "Processing...";
-        resultText.innerText = "AI analyzing video... please wait.";
+        resultText.innerText = "AI ভিডিওটি বিশ্লেষণ করছে, দয়া করে অপেক্ষা করুন...";
 
         try {
-            const base64Data = await toBase64(videoFile);
-            const base64Content = base64Data.split(',')[1];
+            const base64Content = await toBase64(videoFile);
+            const pureBase64 = base64Content.split(',')[1];
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
@@ -55,28 +119,21 @@
                 body: JSON.stringify({
                     contents: [{
                         parts: [
-                            { text: "Transcribe the audio from this video and provide the text subtitles clearly." },
-                            { inline_data: { mime_type: videoFile.type || "video/mp4", data: base64Content } }
+                            { text: "এই ভিডিও থেকে সব কথা শুনে ট্রান্সক্রিপ্ট লিখে দাও।" },
+                            { inline_data: { mime_type: videoFile.type, data: pureBase64 } }
                         ]
                     }]
                 })
             });
 
             const data = await response.json();
-            
-            // এরর ডিবাগিং: কনসোলে পুরো রেসপন্স দেখাবে
-            console.log("API Response:", data);
-
-            if (data.error) {
-                resultText.innerText = "Error: " + data.error.message;
-            } else if (data.candidates && data.candidates[0].content.parts[0].text) {
+            if (data.candidates && data.candidates[0].content.parts[0].text) {
                 resultText.innerText = data.candidates[0].content.parts[0].text;
             } else {
-                resultText.innerText = "কোনো লেখা খুঁজে পাওয়া যায়নি। ভিডিওতে আওয়াজ আছে কি না নিশ্চিত করুন।";
+                resultText.innerText = "Error: " + (data.error ? data.error.message : "কোনো রেজাল্ট পাওয়া যায়নি।");
             }
         } catch (error) {
-            console.error(error);
-            resultText.innerText = "Connection error! ইন্টারন্টে বা API Key চেক করুন।";
+            resultText.innerText = "সংযোগ বিচ্ছিন্ন হয়েছে বা ভুল API Key।";
         } finally {
             loader.style.display = "none";
             btnText.innerText = "Convert";
@@ -89,9 +146,8 @@
         reader.onload = () => resolve(reader.result);
         reader.onerror = error => reject(error);
     });
-
-    document.getElementById('drop-zone').onclick = () => videoInput.click();
-    videoInput.onchange = () => {
-        if(videoInput.files[0]) document.getElementById('fileName').innerText = "Selected: " + videoInput.files[0].name;
-    };
+};
 </script>
+
+</body>
+</html>

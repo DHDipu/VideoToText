@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>Premium Video Subtitle App</title>
+<style>
+body{margin:0;font-family:Inter,Arial,sans-serif;background:linear-gradient(135deg,#eef2ff,#f8f9ff);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.wrap{width:920px;max-width:100%;background:#fff;border-radius:28px;box-shadow:0 20px 60px rgba(76,81,191,.18);padding:34px}
+h1{text-align:center;font-size:54px;color:#5963d6;margin:0 0 24px}
+.box{border:8px solid #5963d6;border-radius:18px;padding:10px}.box input{width:100%;border:none;outline:none;font-size:34px}
+.drop{margin-top:22px;border:3px dashed #5963d6;border-radius:20px;background:#f5f6ff;height:220px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:30px;color:#666;cursor:pointer}
+.btn{margin-top:24px;width:100%;padding:20px;border:none;border-radius:18px;background:linear-gradient(90deg,#8d8cff,#5b63d6);color:#fff;font-size:34px;cursor:pointer}
+.out{margin-top:24px;background:#5963d6;color:#fff;border-radius:22px;padding:24px;min-height:180px;font-size:24px;white-space:pre-wrap}
+.small{margin-top:10px;color:#666;font-size:14px}.topbar{display:flex;justify-content:flex-end;gap:10px}.mini{padding:10px 14px;border:none;border-radius:12px;background:#eef0ff;color:#5963d6;cursor:pointer}
+</style></head><body>
+<div class='wrap'>
+<div class='topbar'><button class='mini' onclick='setApiKey()'>API Key</button><button class='mini' onclick='removeKey()'>Remove Key</button></div>
+<h1>Video to Bangla Subtitle</h1>
+<div class='box'><input placeholder='Paste video URL (optional)'></div>
+<div class='drop' id='drop'>Tap or Drag & Drop Video Here<input type='file' id='file' accept='video/*' hidden></div>
+<button class='btn' onclick='convertVideo()'>Convert Now</button>
+<div class='out' id='out'>বাংলা সাবটাইটেল এখানে দেখাবে...</div>
+<div class='small'>Gemini API key browser এ save হবে.</div>
+</div>
+<script>
+const drop=document.getElementById('drop'),file=document.getElementById('file');drop.onclick=()=>file.click();file.onchange=()=>{if(file.files[0])drop.innerHTML=file.files[0].name};
+function setApiKey(){let k=prompt('Enter Gemini API Key');if(k){localStorage.setItem('gemini_key',k);alert('Saved Successfully')}}
+function removeKey(){localStorage.removeItem('gemini_key');alert('Removed')}
+async function convertVideo(){let key=localStorage.getItem('gemini_key');if(!key){setApiKey();key=localStorage.getItem('gemini_key');if(!key)return;}let f=file.files[0];if(!f){alert('Upload video first');return;}document.getElementById('out').textContent='Processing video... please wait';setTimeout(()=>{document.getElementById('out').textContent='এটি ডেমো আউটপুট।\nভিডিওর কথা বাংলায় এখানে দেখাবে।\nGemini API connect করলে real subtitle আসবে।';},2000)}
+</script></body></html>

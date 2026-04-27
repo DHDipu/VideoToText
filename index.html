@@ -1,48 +1,125 @@
 <!DOCTYPE html>
-<html lang='en'>
+<html lang="bn">
 <head>
-<meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
-<title>Premium Video Subtitle App</title>
-<style>
-body{margin:0;font-family:Inter,Arial,sans-serif;background:linear-gradient(135deg,#eef2ff,#f8f9ff);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.wrap{width:920px;max-width:100%;background:#fff;border-radius:28px;box-shadow:0 20px 60px rgba(76,81,191,.18);padding:34px}
-h1{text-align:center;font-size:54px;color:#5963d6;margin:0 0 24px}
-.box{border:8px solid #5963d6;border-radius:18px;padding:10px}.box input{width:100%;border:none;outline:none;font-size:34px}
-.drop{margin-top:22px;border:3px dashed #5963d6;border-radius:20px;background:#f5f6ff;height:220px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:30px;color:#666;cursor:pointer}
-.btn{margin-top:24px;width:100%;padding:20px;border:none;border-radius:18px;background:linear-gradient(90deg,#8d8cff,#5b63d6);color:#fff;font-size:34px;cursor:pointer}
-.out{margin-top:24px;background:#5963d6;color:#fff;border-radius:22px;padding:24px;min-height:180px;font-size:24px;white-space:pre-wrap}
-.small{margin-top:10px;color:#666;font-size:14px}.topbar{display:flex;justify-content:flex-end;gap:10px}.mini{padding:10px 14px;border:none;border-radius:12px;background:#eef0ff;color:#5963d6;cursor:pointer}
-</style></head><body>
-<div class='wrap'>
-<div class='topbar'><button class='mini' onclick='setApiKey()'>API Key</button><button class='mini' onclick='removeKey()'>Remove Key</button></div>
-<h1>Video to Bangla Subtitle</h1>
-<div class='box'><input placeholder='Paste video URL (optional)'></div>
-<div class='drop' id='drop'>Tap or Drag & Drop Video Here<input type='file' id='file' accept='video/*' hidden></div>
-<button class='btn' onclick='convertVideo()'>Convert Now</button>
-<div class='out' id='out'>বাংলা সাবটাইটেল এখানে দেখাবে...</div>
-<div class='small'>Gemini API key browser এ save হবে.</div>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link to Text Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+        h2 {
+            color: #5d66b0;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            border: 4px solid #7a82c2;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            outline: none;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .upload-area {
+            border: 2px dashed #7a82c2;
+            background-color: #f8f9ff;
+            padding: 40px 20px;
+            border-radius: 10px;
+            color: #888;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #adaed6;
+            color: white;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        button:hover {
+            background-color: #7a82c2;
+        }
+        .output-box {
+            margin-top: 20px;
+            background-color: #636ba9;
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            min-height: 100px;
+            text-align: left;
+            font-size: 14px;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Link to Text Converter</h2>
+    
+    <div class="input-group">
+        <input type="text" placeholder="URL or Link">
+    </div>
+
+    <div class="upload-area" id="drop-zone">
+        Tap, drag & drop, or paste <span style="background:#fff; padding: 2px 5px; border-radius: 3px;">video</span> here
+        <input type="file" id="videoInput" accept="video/*" style="display: none;">
+    </div>
+
+    <button onclick="startConversion()">
+        🔍 Convert
+    </button>
+
+    <div class="output-box" id="output">
+        <small>Translate</small>
+        <p id="resultText">এখানে আপনার সাবটাইটেল দেখা যাবে...</p>
+    </div>
 </div>
+
 <script>
-const drop=document.getElementById('drop'),file=document.getElementById('file');drop.onclick=()=>file.click();file.onchange=()=>{if(file.files[0])drop.innerHTML=file.files[0].name};
-function setApiKey(){let k=prompt('Enter Gemini API Key');if(k){localStorage.setItem('gemini_key',k);alert('Saved Successfully')}}
-function removeKey(){localStorage.removeItem('gemini_key');alert('Removed')}
-async function convertVideo(){
-  let key=localStorage.getItem('gemini_key');
-  if(!key){key=prompt('Enter Google AI Studio API Key'); if(!key)return; localStorage.setItem('gemini_key',key);} 
-  const out=document.getElementById('out');
-  const f=file.files[0];
-  if(!f){alert('Upload video first');return;}
-  out.textContent='Processing video...';
-  try{
-    const base64=await toBase64(f);
-    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key,{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({contents:[{parts:[{text:'ভিডিওর কথাগুলো শুনে বাংলায় লিখে দাও। শুধু transcript দাও.'},{inline_data:{mime_type:f.type,data:base64.split(',')[1]}}]}]})
-    });
-    const data=await res.json();
-    if(data.candidates&&data.candidates[0]) out.textContent=data.candidates[0].content.parts[0].text;
-    else out.textContent='Error: '+JSON.stringify(data,null,2);
-  }catch(err){out.textContent='Failed: '+err.message;}
-}
-function toBase64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});}
-</script></body></html>
+    const dropZone = document.getElementById('drop-zone');
+    const videoInput = document.getElementById('videoInput');
+    const resultText = document.getElementById('resultText');
+
+    dropZone.onclick = () => videoInput.click();
+
+    function startConversion() {
+        if (!videoInput.files[0]) {
+            alert("অনুগ্রহ করে একটি ভিডিও ফাইল সিলেক্ট করুন।");
+            return;
+        }
+        resultText.innerText = "প্রসেসিং হচ্ছে... (এটি একটি ডেমো, গিটহাব পেজে AI মডেলের জন্য API প্রয়োজন হয়)";
+        // এখানে ভবিষ্যতে আপনি Whisper বা Speech SDK ইন্টিগ্রেট করতে পারেন।
+    }
+</script>
+
+</body>
+</html>

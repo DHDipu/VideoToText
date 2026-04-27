@@ -5,20 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video to Text Converter</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .container { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 450px; text-align: center; }
-        h2 { color: #5d66b0; font-size: 24px; margin-bottom: 25px; }
-        .input-group { border: 3px solid #7a82c2; border-radius: 12px; margin-bottom: 15px; }
-        input[type="text"] { width: 90%; padding: 12px; border: none; outline: none; font-size: 16px; color: #333; }
-        .upload-area { border: 2px dashed #adaed6; background-color: #f8f9ff; padding: 40px 20px; border-radius: 15px; color: #666; cursor: pointer; margin-bottom: 20px; position: relative; }
-        .upload-area:hover { background-color: #f0f1ff; }
+        h2 { color: #5d66b0; margin-bottom: 25px; }
+        
+        .upload-area { border: 2px dashed #adaed6; background-color: #f8f9ff; padding: 40px 20px; border-radius: 15px; color: #666; cursor: pointer; margin-bottom: 20px; }
         .video-label { background: #fff; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
-        button { background-color: #adaed6; color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        button:hover { background-color: #7a82c2; }
-        .output-box { margin-top: 25px; background-color: #636ba9; color: white; padding: 20px; border-radius: 18px; text-align: left; position: relative; }
+        
+        #convertBtn { background-color: #adaed6; color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        #convertBtn:hover { background-color: #7a82c2; }
+        
+        .output-box { margin-top: 25px; background-color: #636ba9; color: white; padding: 20px; border-radius: 18px; text-align: left; min-height: 100px; }
         .output-header { font-size: 12px; opacity: 0.8; margin-bottom: 10px; display: block; }
-        #resultText { font-size: 15px; line-height: 1.6; white-space: pre-wrap; margin: 0; }
-        .loader { display: none; border: 3px solid #f3f3f3; border-top: 3px solid #5d66b0; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        
+        /* Modal Style */
+        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: white; margin: 15% auto; padding: 20px; border-radius: 15px; width: 300px; text-align: center; }
+        .modal input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        .modal button { padding: 8px 20px; margin: 5px; cursor: pointer; border-radius: 5px; border: none; }
+        .save-btn { background: #5d66b0; color: white; }
+        
+        .settings-btn { font-size: 12px; color: #7a82c2; text-decoration: underline; cursor: pointer; margin-top: 10px; display: inline-block; }
+        .loader { display: none; border: 3px solid #f3f3f3; border-top: 3px solid #5d66b0; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -26,10 +34,6 @@
 
 <div class="container">
     <h2>Link to Text Converter</h2>
-    
-    <div class="input-group">
-        <input type="text" id="apiKey" placeholder="এখানে আপনার Gemini API Key দিন">
-    </div>
 
     <div class="upload-area" id="drop-zone">
         Tap, drag & drop, or paste <span class="video-label">video</span> here
@@ -37,47 +41,86 @@
         <p id="fileName" style="font-size: 12px; margin-top: 10px; color: #5d66b0;"></p>
     </div>
 
-    <button onclick="startConversion()" id="convertBtn">
+    <button onclick="checkAndConvert()" id="convertBtn">
         <span class="loader" id="loader"></span>
         🔍 <span id="btnText">Convert</span>
     </button>
 
-    <div class="output-box" id="output">
+    <div class="output-box">
         <span class="output-header">Translate / Subtitles</span>
-        <p id="resultText">এখানে আপনার ভিডিওর টেক্সট দেখা যাবে...</p>
+        <p id="resultText">এখানে ভিডিওর টেক্সট দেখা যাবে...</p>
+    </div>
+
+    <span class="settings-btn" onclick="removeApiKey()">Remove API Key</span>
+</div>
+
+<div id="apiModal" class="modal">
+    <div class="modal-content">
+        <h3>API Key প্রয়োজন</h3>
+        <p style="font-size: 12px;">আপনার Google AI Studio API Key দিন</p>
+        <input type="password" id="apiInput" placeholder="Paste API Key here">
+        <br>
+        <button class="save-btn" onclick="saveApiKey()">Save</button>
+        <button onclick="closeModal()">Cancel</button>
     </div>
 </div>
 
-<script type="module">
-    // আমরা সরাসরি ব্রাউজার থেকে Gemini API কল করার জন্য logic লিখব
-    window.startConversion = async function() {
-        const apiKey = document.getElementById('apiKey').value;
-        const videoFile = document.getElementById('videoInput').files[0];
-        const resultText = document.getElementById('resultText');
-        const loader = document.getElementById('loader');
-        const btnText = document.getElementById('btnText');
+<script>
+    const videoInput = document.getElementById('videoInput');
+    const resultText = document.getElementById('resultText');
+    const apiModal = document.getElementById('apiModal');
+    const apiInput = document.getElementById('apiInput');
+    const loader = document.getElementById('loader');
+    const btnText = document.getElementById('btnText');
 
-        if (!apiKey) return alert("দয়া করে API Key দিন!");
-        if (!videoFile) return alert("একটি ভিডিও ফাইল সিলেক্ট করুন!");
+    // ১. কনভার্ট বাটনে ক্লিক করলে চেক করবে API Key আছে কি না
+    async function checkAndConvert() {
+        const savedKey = localStorage.getItem('gemini_api_key');
+        if (!savedKey) {
+            apiModal.style.display = 'block';
+        } else {
+            startTranscription(savedKey);
+        }
+    }
 
-        // UI Loading state
+    // ২. API Key সেভ করা
+    function saveApiKey() {
+        const key = apiInput.value.trim();
+        if (key) {
+            localStorage.setItem('gemini_api_key', key);
+            apiModal.style.display = 'none';
+            alert("API Key সফলভাবে সেভ হয়েছে!");
+        }
+    }
+
+    // ৩. API Key রিমুভ করা
+    function removeApiKey() {
+        localStorage.removeItem('gemini_api_key');
+        alert("API Key মুছে ফেলা হয়েছে।");
+    }
+
+    function closeModal() { apiModal.style.display = 'none'; }
+
+    // ৪. মূল কাজ: ভিডিও প্রসেসিং
+    async function startTranscription(apiKey) {
+        const videoFile = videoInput.files[0];
+        if (!videoFile) return alert("দয়া করে আগে একটি ভিডিও ফাইল সিলেক্ট করুন!");
+
         loader.style.display = "inline-block";
         btnText.innerText = "Processing...";
-        resultText.innerText = "ভিডিওটি AI বিশ্লেষণ করছে, দয়া করে অপেক্ষা করুন...";
+        resultText.innerText = "AI ভিডিওটি বিশ্লেষণ করছে...";
 
         try {
-            // ১. ফাইলটিকে Base64 এ রূপান্তর
             const base64Data = await toBase64(videoFile);
             const base64Content = base64Data.split(',')[1];
 
-            // ২. Gemini API Call
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${AIzaSyDIloHL1BSgO-kG6OyRnmktOfElPkwnx44}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{
                         parts: [
-                            { text: "এই ভিডিওর সব কথাগুলো শুনে নির্ভুলভাবে টেক্সট বা সাবটাইটেল আকারে লিখে দাও। শুধু টেক্সটটুকু দিবে।" },
+                            { text: "এই ভিডিওতে যা যা বলা হয়েছে তা শুনে পরিষ্কারভাবে সাবটাইটেল বা টেক্সট আকারে লিখে দাও। শুধু মূল কথাগুলো দিবে।" },
                             { inline_data: { mime_type: videoFile.type, data: base64Content } }
                         ]
                     }]
@@ -85,17 +128,18 @@
             });
 
             const data = await response.json();
-            const textOutput = data.candidates[0].content.parts[0].text;
-            
-            resultText.innerText = textOutput;
+            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                resultText.innerText = data.candidates[0].content.parts[0].text;
+            } else {
+                resultText.innerText = "AI থেকে কোনো রেজাল্ট পাওয়া যায়নি। আবার চেষ্টা করুন।";
+            }
         } catch (error) {
-            console.error(error);
-            resultText.innerText = "দুঃখিত, টেক্সট কনভার্ট করতে সমস্যা হয়েছে। আপনার API Key এবং ইন্টারনেট চেক করুন।";
+            resultText.innerText = "ভুল হয়েছে! হয়তো API Key টি সঠিক নয় বা ফাইলের সাইজ অনেক বড়।";
         } finally {
             loader.style.display = "none";
             btnText.innerText = "Convert";
         }
-    };
+    }
 
     const toBase64 = file => new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -104,14 +148,9 @@
         reader.onerror = error => reject(error);
     });
 
-    // File selection UI handle
-    const dropZone = document.getElementById('drop-zone');
-    const videoInput = document.getElementById('videoInput');
-    const fileNameDisplay = document.getElementById('fileName');
-
-    dropZone.onclick = () => videoInput.click();
+    document.getElementById('drop-zone').onclick = () => videoInput.click();
     videoInput.onchange = () => {
-        if(videoInput.files[0]) fileNameDisplay.innerText = "Selected: " + videoInput.files[0].name;
+        if(videoInput.files[0]) document.getElementById('fileName').innerText = "Selected: " + videoInput.files[0].name;
     };
 </script>
 
